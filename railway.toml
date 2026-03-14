@@ -1,0 +1,8 @@
+[build]
+dockerfilePath = "Dockerfile.chroma"
+
+[deploy]
+startCommand = "chroma run --host 0.0.0.0 --port 8000 --path /chroma_db"
+healthcheckPath = "/api/v1/heartbeat"
+healthcheckTimeout = 30
+restartPolicyType = "on-failure"
