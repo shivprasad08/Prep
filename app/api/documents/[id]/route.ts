@@ -7,9 +7,9 @@ import { documents, resumes } from "@/db/schema";
 import { db } from "@/lib/db";
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 export async function DELETE(
@@ -23,7 +23,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const [existingDocument, existingResume] = await Promise.all([
       db.query.documents.findFirst({
