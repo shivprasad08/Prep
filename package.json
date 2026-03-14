@@ -32,7 +32,7 @@
     "cheerio": "^1.1.0",
     "chromadb": "^3.3.3",
     "cloudinary": "^2.9.0",
-    "dotenv": "^17.3.1",
+    "dotenv": "^16.6.1",
     "drizzle-kit": "^0.31.9",
     "drizzle-orm": "^0.45.1",
     "langchain": "^1.2.32",
