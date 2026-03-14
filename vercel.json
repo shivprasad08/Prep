@@ -4,22 +4,18 @@
   "outputDirectory": ".next",
   "functions": {
     "app/api/chat/route.ts": {
-      "memory": 1024,
       "maxDuration": 30,
       "regions": ["sin1"]
     },
     "app/api/embed/route.ts": {
-      "memory": 1024,
       "maxDuration": 60,
       "regions": ["sin1"]
     },
     "app/api/upload/route.ts": {
-      "memory": 1024,
       "maxDuration": 60,
       "regions": ["sin1"]
     },
     "app/api/admin/ingest/route.ts": {
-      "memory": 1024,
       "maxDuration": 300,
       "regions": ["sin1"]
     }
