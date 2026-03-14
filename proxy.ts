@@ -12,9 +12,7 @@ const authMiddleware = clerkMiddleware(async (auth, req) => {
   }
 });
 
-export default function middleware(
-  ...args: Parameters<typeof authMiddleware>
-) {
+export default function proxy(...args: Parameters<typeof authMiddleware>) {
   if (!hasClerkEnv) {
     return NextResponse.next();
   }
