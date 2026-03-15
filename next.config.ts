@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  serverExternalPackages: ["chromadb", "@xenova/transformers", "pdf-parse"],
+  serverExternalPackages: ["@xenova/transformers", "pdf-parse"],
   async headers() {
     return [
       {

@@ -34,17 +34,40 @@ async function checkDatabase(): Promise<CheckResult> {
   }
 }
 
-async function checkChroma(): Promise<CheckResult> {
+async function checkPinecone(): Promise<CheckResult> {
   try {
-    const url = process.env.CHROMA_URL || "http://localhost:8000";
-    const response = await axios.get(`${url}/api/v1/heartbeat`, { timeout: 10000 });
+    const apiKey = process.env.PINECONE_API_KEY;
+    const host = process.env.PINECONE_HOST;
+
+    if (!apiKey || !host) {
+      return {
+        name: "Pinecone connection",
+        ok: false,
+        details: "PINECONE_API_KEY or PINECONE_HOST missing",
+      };
+    }
+
+    const baseUrl = host.startsWith("http") ? host : `https://${host}`;
+    const response = await axios.post(
+      `${baseUrl}/describe_index_stats`,
+      {},
+      {
+        timeout: 10000,
+        headers: {
+          "Api-Key": apiKey,
+          "Content-Type": "application/json",
+          "X-Pinecone-API-Version": "2024-07",
+        },
+      },
+    );
+
     return {
-      name: "ChromaDB connection",
+      name: "Pinecone connection",
       ok: response.status >= 200 && response.status < 300,
       details: `status=${response.status}`,
     };
   } catch (error) {
-    return { name: "ChromaDB connection", ok: false, details: String(error) };
+    return { name: "Pinecone connection", ok: false, details: String(error) };
   }
 }
 
@@ -112,7 +135,8 @@ async function checkEnvPresence(): Promise<CheckResult> {
     "CLOUDINARY_CLOUD_NAME",
     "CLOUDINARY_API_KEY",
     "CLOUDINARY_API_SECRET",
-    "CHROMA_URL",
+    "PINECONE_API_KEY",
+    "PINECONE_HOST",
     "ADMIN_SECRET_KEY",
     "NEXT_PUBLIC_APP_URL",
   ];
@@ -132,7 +156,7 @@ async function main() {
   const checks: CheckResult[] = [];
   checks.push(await checkEnvPresence());
   checks.push(await checkDatabase());
-  checks.push(await checkChroma());
+  checks.push(await checkPinecone());
   checks.push(await checkGroq());
   checks.push(await checkCloudinary());
   checks.push(await checkClerk());

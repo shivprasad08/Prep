@@ -1,9 +1,8 @@
 import path from "path";
 
-import { ChromaClient } from "chromadb";
 import { v5 as uuidv5 } from "uuid";
 
-import { embedTexts } from "../lib/embeddings";
+import { addGlobalDocuments } from "../lib/chromadb";
 import { chunkText } from "../lib/rag";
 import { listJsonFiles, readJson } from "./common";
 
@@ -52,20 +51,12 @@ function normalizeRecord(record: ProcessedRecord, fallbackSource: string) {
 }
 
 /**
- * Runs ingestion from processed JSON files into the global Chroma collection.
+ * Runs ingestion from processed JSON files into the global Pinecone namespace.
  */
 export async function runIngestion(
   options: IngestOptions = {},
   onLog: (line: string) => void = (line) => console.log(line),
 ) {
-  const chromaClient = new ChromaClient({
-    path: process.env.CHROMA_URL || "http://localhost:8000",
-  });
-
-  const collection = await chromaClient.getOrCreateCollection({
-    name: "placementgpt_global",
-  });
-
   const processedRoot = path.join(process.cwd(), "data", "processed");
   const allFiles = await listJsonFiles(processedRoot);
 
@@ -110,23 +101,11 @@ export async function runIngestion(
           DOCUMENT_NAMESPACE,
         );
 
-        const existing = await collection.get({
-          where: { documentId },
-        });
-
-        if ((existing.ids?.length ?? 0) > 0) {
-          onLog(
-            `[Ingest] Skipping existing document ${normalized.title} (${documentId})`,
-          );
-          continue;
-        }
-
         const chunks = chunkText(normalized.content, 500, 50);
         if (chunks.length === 0) {
           continue;
         }
 
-        const embeddings = await embedTexts(chunks);
         const ids = chunks.map((_, chunkIndex) => `${documentId}_${chunkIndex}`);
         const metadatas = chunks.map((_, chunkIndex) => ({
           company: normalized.company,
@@ -141,12 +120,7 @@ export async function runIngestion(
           `[Ingest] Ingesting ${normalized.company} from ${normalized.source}: ${normalized.title}`,
         );
 
-        await collection.add({
-          ids,
-          documents: chunks,
-          embeddings,
-          metadatas,
-        });
+        await addGlobalDocuments(chunks, metadatas, ids);
 
         totalChunksStored += chunks.length;
         documentsIngested += 1;

@@ -14,7 +14,7 @@ type EmbedRequestBody = {
 };
 
 /**
- * Chunks parsed text and stores chunk embeddings in the current user's Chroma collection.
+ * Chunks parsed text and stores chunk embeddings in the current user's vector namespace.
  */
 export async function POST(request: Request) {
   try {

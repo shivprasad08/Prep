@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 
 import { db } from "@/lib/db";
+import { checkVectorStoreConnection } from "@/lib/chromadb";
 
 export const runtime = "nodejs";
 
@@ -13,11 +14,11 @@ export const runtime = "nodejs";
 export async function GET() {
   const services: {
     database: "ok" | "error";
-    chromadb: "ok" | "error";
+    vectordb: "ok" | "error";
     groq: "ok" | "error";
   } = {
     database: "error",
-    chromadb: "error",
+    vectordb: "error",
     groq: "error",
   };
 
@@ -29,13 +30,8 @@ export async function GET() {
   }
 
   try {
-    const chromaUrl = process.env.CHROMA_URL || "http://localhost:8000";
-    const response = await axios.get(`${chromaUrl}/api/v1/heartbeat`, {
-      timeout: 10000,
-    });
-    if (response.status >= 200 && response.status < 300) {
-      services.chromadb = "ok";
-    }
+    await checkVectorStoreConnection();
+    services.vectordb = "ok";
   } catch (error) {
     Sentry.captureException(error);
   }

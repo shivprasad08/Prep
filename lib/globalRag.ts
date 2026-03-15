@@ -1,34 +1,10 @@
-import { ChromaClient } from "chromadb";
-
-import { queryDocuments, type QueryResultItem } from "@/lib/chromadb";
-import { embedText } from "@/lib/embeddings";
+import {
+  queryDocuments,
+  queryGlobalDocuments,
+  type GlobalQueryResult,
+  type QueryResultItem,
+} from "@/lib/chromadb";
 import { buildContext } from "@/lib/rag";
-
-type GlobalChunkMetadata = {
-  company?: string;
-  source?: string;
-  title?: string;
-  url?: string;
-  chunkIndex?: number;
-  documentId?: string;
-};
-
-type GlobalQueryResult = {
-  id: string;
-  chunk: string;
-  metadata: GlobalChunkMetadata | null;
-  distance: number | null;
-};
-
-const globalClient = new ChromaClient({
-  path: process.env.CHROMA_URL || "http://localhost:8000",
-});
-
-async function getGlobalCollection() {
-  return globalClient.getOrCreateCollection({
-    name: "placementgpt_global",
-  });
-}
 
 /**
  * Queries the global shared collection, optionally filtered by company.
@@ -38,30 +14,7 @@ export async function queryGlobalCollection(
   company?: string,
   nResults = 5,
 ): Promise<GlobalQueryResult[]> {
-  const collection = await getGlobalCollection();
-  const queryEmbedding = await embedText(query);
-
-  const where = company ? { company: company.toLowerCase() } : undefined;
-  const result = await collection.query({
-    queryEmbeddings: [queryEmbedding],
-    nResults,
-    where,
-    include: ["documents", "metadatas", "distances"],
-  });
-
-  const ids = result.ids?.[0] ?? [];
-  const documents = result.documents?.[0] ?? [];
-  const metadatas = (result.metadatas?.[0] ?? []) as Array<
-    GlobalChunkMetadata | null
-  >;
-  const distances = result.distances?.[0] ?? [];
-
-  return ids.map((id, index) => ({
-    id,
-    chunk: documents[index] ?? "",
-    metadata: metadatas[index] ?? null,
-    distance: distances[index] ?? null,
-  }));
+  return queryGlobalDocuments(query, company, nResults);
 }
 
 type RankedItem = {
