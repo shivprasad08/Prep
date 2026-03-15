@@ -1,7 +1,5 @@
 import axios from "axios";
 
-import { embedText, embedTexts } from "@/lib/embeddings";
-
 const API_VERSION = "2024-07";
 const DEFAULT_GLOBAL_NAMESPACE = "placementgpt_global";
 
@@ -87,6 +85,7 @@ export async function addDocuments(
     throw new Error("Chunks, metadata, and ids must have equal lengths");
   }
 
+  const { embedTexts } = await import("@/lib/embeddings");
   const embeddings = await embedTexts(chunks);
 
   const vectors = ids.map((id, index) => ({
@@ -112,6 +111,7 @@ export async function queryDocuments(
   query: string,
   nResults = 5,
 ): Promise<QueryResultItem[]> {
+  const { embedText } = await import("@/lib/embeddings");
   const queryEmbedding = await embedText(query);
 
   const result = await pineconePost<{ matches?: PineconeMatch[] }>("/query", {
@@ -178,6 +178,7 @@ export async function addGlobalDocuments(
     throw new Error("Chunks, metadata, and ids must have equal lengths");
   }
 
+  const { embedTexts } = await import("@/lib/embeddings");
   const embeddings = await embedTexts(chunks);
   const vectors = ids.map((id, index) => ({
     id,
@@ -202,6 +203,7 @@ export async function queryGlobalDocuments(
   company?: string,
   nResults = 5,
 ): Promise<GlobalQueryResult[]> {
+  const { embedText } = await import("@/lib/embeddings");
   const queryEmbedding = await embedText(query);
 
   const result = await pineconePost<{ matches?: PineconeMatch[] }>("/query", {
