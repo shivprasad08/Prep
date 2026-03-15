@@ -1,9 +1,10 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import * as Sentry from "@sentry/nextjs";
+import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { PDFParse } from "pdf-parse";
 
-import { documents, resumes } from "@/db/schema";
+import { documents, resumes, users } from "@/db/schema";
 import { db } from "@/lib/db";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 
@@ -26,6 +27,33 @@ export async function POST(request: Request) {
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const existingUser = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+
+    if (!existingUser) {
+      const clerkUser = await currentUser();
+      const primaryEmail = clerkUser?.emailAddresses.find(
+        (email) => email.id === clerkUser.primaryEmailAddressId,
+      )?.emailAddress;
+
+      if (!primaryEmail) {
+        return NextResponse.json(
+          { error: "Unable to resolve user email. Please sign in again." },
+          { status: 400 },
+        );
+      }
+
+      await db
+        .insert(users)
+        .values({
+          id: userId,
+          email: primaryEmail,
+          name: clerkUser?.fullName || clerkUser?.username || null,
+        })
+        .onConflictDoNothing({ target: users.id });
     }
 
     const formData = await request.formData();
